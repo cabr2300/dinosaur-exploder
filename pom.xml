@@ -18,6 +18,8 @@
         <junit.version>5.13.4</junit.version>
         <mainClassName>com.dinosaur.dinosaurexploder.DinosaurApp</mainClassName>
         <mainClassJProName>com.dinosaur.dinosaurexploder.DinosaurWebApp</mainClassJProName>
+        <jacoco.version>0.8.10</jacoco.version>
+        <pitest.version>1.15.8</pitest.version>
     </properties>
     <dependencies>
         <dependency>
@@ -133,6 +135,26 @@
                 <configuration>
                     <mainClassName>${mainClassJProName}</mainClassName>
                 </configuration>
+            </plugin>
+            <!-- Jacoco -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.10</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

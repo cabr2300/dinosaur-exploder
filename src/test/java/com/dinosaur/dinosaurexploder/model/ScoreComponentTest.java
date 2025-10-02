@@ -25,5 +25,4 @@ class ScoreComponentTest {
         scoreComponent.incrementScore(1);
         assertEquals(5, scoreComponent.getScore());
     }
-
 }

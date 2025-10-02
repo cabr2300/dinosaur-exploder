@@ -3,6 +3,7 @@ package com.dinosaur.dinosaurexploder.model;
 import com.dinosaur.dinosaurexploder.utils.LevelManager;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LevelTest {
@@ -33,4 +34,13 @@ class LevelTest {
         }
     }
 
+    @Test
+    void checkInitialStats() {
+        LevelManager levelManager = new LevelManager();
+        assertEquals(1, levelManager.getCurrentLevel(), "Current level correct");
+        assertEquals(0.75, levelManager.getEnemySpawnRate(), "Enemy spawn rate correct");
+        assertEquals(1.5, levelManager.getEnemySpeed(), "Enemy speed correct");
+        assertEquals(0, levelManager.getLevelProgress(), "Level progress correct");
+        assertEquals(5, levelManager.getEnemiesToDefeat(), "Enemies to defeat correct");
+    }
 }
