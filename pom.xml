@@ -9,7 +9,7 @@
     <version>1.0</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <source.version>11</source.version>
+        <source.version>21</source.version>
         <maven.compiler.version>3.14.1</maven.compiler.version>
         <maven.shade.version>3.6.1</maven.shade.version>
         <jfx.maven.plugin.version>0.0.8</jfx.maven.plugin.version>
@@ -18,7 +18,7 @@
         <junit.version>5.13.4</junit.version>
         <mainClassName>com.dinosaur.dinosaurexploder.DinosaurApp</mainClassName>
         <mainClassJProName>com.dinosaur.dinosaurexploder.DinosaurWebApp</mainClassJProName>
-        <jacoco.version>0.8.10</jacoco.version>
+        <jacoco.version>0.8.12</jacoco.version>
         <pitest.version>1.15.8</pitest.version>
     </properties>
     <dependencies>
@@ -80,82 +80,107 @@
         </pluginRepository>
     </pluginRepositories>
     <build>
-        <plugins>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven.compiler.version}</version>
-                <configuration>
-                    <release>${source.version}</release>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.openjfx</groupId>
-                <artifactId>javafx-maven-plugin</artifactId>
-                <version>${jfx.maven.plugin.version}</version>
-                <configuration>
-                    <stripDebug>true</stripDebug>
-                    <compress>2</compress>
-                    <noHeaderFiles>true</noHeaderFiles>
-                    <noManPages>true</noManPages>
-                    <launcher>Start-game</launcher>
-                    <jlinkImageName>game</jlinkImageName>
-                    <jlinkZipName>fxgl-game</jlinkZipName>
-                    <mainClass>${mainClassName}</mainClass>
-                </configuration>
-            </plugin>
-            <!-- Maven Shade Plugin for creating a fat JAR -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>${maven.shade.version}</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <transformers>
-                                <!-- Add Main-Class to the manifest -->
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>${mainClassName}</mainClass>
-                                </transformer>
-                            </transformers>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- JPro to run game on the browser -->
-            <plugin>
-                <groupId>one.jpro</groupId>
-                <artifactId>jpro-maven-plugin</artifactId>
-                <version>${jpro.version}</version>
-                <configuration>
-                    <mainClassName>${mainClassJProName}</mainClassName>
-                </configuration>
-            </plugin>
-            <!-- Jacoco -->
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.10</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>report</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+  <plugins>
+
+    <!-- ✅ JUnit runner (critical for test discovery) -->
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-surefire-plugin</artifactId>
+      <version>3.2.5</version>
+      <configuration>
+        <!-- You have module-info.java; this avoids module-path issues -->
+        <useModulePath>false</useModulePath>
+      </configuration>
+    </plugin>
+
+    <!-- Compiler -->
+    <plugin>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <version>${maven.compiler.version}</version>
+      <configuration>
+        <release>${source.version}</release>
+      </configuration>
+    </plugin>
+
+    <!-- JavaFX run plugin (unchanged) -->
+    <plugin>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-maven-plugin</artifactId>
+      <version>${jfx.maven.plugin.version}</version>
+      <configuration>
+        <stripDebug>true</stripDebug>
+        <compress>2</compress>
+        <noHeaderFiles>true</noHeaderFiles>
+        <noManPages>true</noManPages>
+        <launcher>Start-game</launcher>
+        <jlinkImageName>game</jlinkImageName>
+        <jlinkZipName>fxgl-game</jlinkZipName>
+        <mainClass>${mainClassName}</mainClass>
+      </configuration>
+    </plugin>
+
+    <!-- Fat JAR (unchanged) -->
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-shade-plugin</artifactId>
+      <version>${maven.shade.version}</version>
+      <executions>
+        <execution>
+          <phase>package</phase>
+          <goals>
+            <goal>shade</goal>
+          </goals>
+          <configuration>
+            <createDependencyReducedPom>false</createDependencyReducedPom>
+            <transformers>
+              <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                <mainClass>${mainClassName}</mainClass>
+              </transformer>
+            </transformers>
+          </configuration>
+        </execution>
+      </executions>
+    </plugin>
+
+    <!-- JPro (unchanged) -->
+    <plugin>
+      <groupId>one.jpro</groupId>
+      <artifactId>jpro-maven-plugin</artifactId>
+      <version>${jpro.version}</version>
+      <configuration>
+        <mainClassName>${mainClassJProName}</mainClassName>
+      </configuration>
+    </plugin>
+
+    <!-- JaCoCo (unchanged) -->
+    <plugin>
+  <groupId>org.jacoco</groupId>
+  <artifactId>jacoco-maven-plugin</artifactId>
+  <version>${jacoco.version}</version>
+  <executions>
+    <execution>
+      <goals><goal>prepare-agent</goal></goals>
+      <configuration>
+        <!-- instrument only your production code -->
+        <includes>
+          <include>com/dinosaur/**</include>
+        </includes>
+        <!-- do not instrument libraries/mocking engines -->
+        <excludes>
+          <exclude>org/mockito/**</exclude>
+          <exclude>net/bytebuddy/**</exclude>
+        </excludes>
+      </configuration>
+    </execution>
+    <execution>
+      <id>report</id>
+      <phase>verify</phase>
+      <goals><goal>report</goal></goals>
+    </execution>
+  </executions>
+</plugin>
+
+  </plugins>
+</build>
+
 </project>
