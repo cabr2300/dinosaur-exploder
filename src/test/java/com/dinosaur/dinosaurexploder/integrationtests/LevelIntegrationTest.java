@@ -63,4 +63,34 @@ class LevelIntegrationTest {
         // Assert
         assertTrue(scoreComponent.getScore() > initialScore, "Score should increase after hit");
     }
+
+    @Test
+    @DisplayName("Integration: defeating boss increases score by current level and advances level")
+    void bossDefeatIntegration() {
+        // Arrange
+        levelManager.nextLevel(); // Level 2
+        int startLevel = levelManager.getCurrentLevel();
+        int startScore = scoreComponent.getScore();
+
+        // Act
+        collisionHandler.handleBossDefeat(scoreComponent);
+
+        // Assert
+        assertEquals(startLevel + 1, levelManager.getCurrentLevel(), "Boss defeat should trigger next level");
+        assertEquals(startScore + startLevel, scoreComponent.getScore(),
+                "Boss defeat should award score equal to current level");
+    }
+
+    @Test
+    @DisplayName("Integration: losing life does not affect score or level")
+    void losingLifeDoesNotAffectScoreOrLevel() {
+        var startScore = scoreComponent.getScore();
+        var startLevel = levelManager.getCurrentLevel();
+
+        collisionHandler.getDamagedPlayerLife(new com.dinosaur.dinosaurexploder.components.LifeComponent());
+
+        assertEquals(startScore, scoreComponent.getScore(), "Score should remain unchanged");
+        assertEquals(startLevel, levelManager.getCurrentLevel(), "Level should remain unchanged");
+    }
+
 }
