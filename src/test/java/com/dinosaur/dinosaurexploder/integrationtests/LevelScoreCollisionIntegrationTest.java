@@ -93,4 +93,67 @@ class LevelScoreCollisionIntegrationTest {
         assertEquals(startLevel, levelManager.getCurrentLevel(), "Level should remain unchanged");
     }
 
+    @Test
+    @DisplayName("Integration: collecting coins gives +2 score each time")
+    void coinGivesTwoPointsEachTime() {
+        var collected = new com.dinosaur.dinosaurexploder.components.CollectedCoinsComponent() {
+            @Override
+            protected void updateText() {
+                /* no-op */ }
+        };
+        var start = scoreComponent.getScore();
+
+        // utan bomb (null) räcker för att testa just score
+        collisionHandler.onPlayerGetCoin(collected, scoreComponent, null);
+        collisionHandler.onPlayerGetCoin(collected, scoreComponent, null);
+        collisionHandler.onPlayerGetCoin(collected, scoreComponent, null);
+
+        assertEquals(start + 3 * 2, scoreComponent.getScore());
+    }
+
+    @Test
+    @DisplayName("Integration: hitting boss does not change score")
+    void bossHitDoesNotChangeScore() {
+        var start = scoreComponent.getScore();
+        var redBoss = new com.dinosaur.dinosaurexploder.components.RedDinoComponent(
+                new com.dinosaur.dinosaurexploder.utils.MockGameTimer());
+
+        collisionHandler.handleHitBoss(redBoss);
+
+        assertEquals(start, scoreComponent.getScore());
+    }
+
+    @Test
+    @DisplayName("Integration: defeating exactly enemiesToDefeat levels up and yields +1 per enemy")
+    void levelUpIsDeterministic() {
+        int startLvl = levelManager.getCurrentLevel();
+        int toDefeat = levelManager.getEnemiesToDefeat();
+        int startScore = scoreComponent.getScore();
+
+        for (int i = 0; i < toDefeat; i++)
+            collisionHandler.isLevelUpAfterHitDino(scoreComponent, progressBar);
+
+        assertEquals(startLvl + 1, levelManager.getCurrentLevel());
+        assertEquals(startScore + toDefeat, scoreComponent.getScore());
+        assertEquals(0.0f, levelManager.getLevelProgress(), 1e-6f); // progress nollas efter nextLevel()
+        assertEquals(toDefeat + 5, levelManager.getEnemiesToDefeat()); // kravet ökar med +5
+    }
+
+    @Test
+    @DisplayName("Integration: level-up fires exactly once at threshold")
+    void levelUpFiresOnce() {
+        int startLvl = levelManager.getCurrentLevel();
+        int toDefeat = levelManager.getEnemiesToDefeat();
+
+        for (int i = 0; i < toDefeat; i++)
+            collisionHandler.isLevelUpAfterHitDino(scoreComponent, progressBar);
+
+        assertEquals(startLvl + 1, levelManager.getCurrentLevel());
+
+        // Nästa träff ska INTE levla upp igen direkt
+        collisionHandler.isLevelUpAfterHitDino(scoreComponent, progressBar);
+        assertEquals(startLvl + 1, levelManager.getCurrentLevel());
+        assertTrue(levelManager.getLevelProgress() > 0f);
+    }
+
 }
