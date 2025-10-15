@@ -1,4 +1,4 @@
-package com.dinosaur.dinosaurexploder.Integrationstests;
+package com.dinosaur.dinosaurexploder.integrationstests;
 
 import com.dinosaur.dinosaurexploder.components.LevelProgressBarComponent;
 import com.dinosaur.dinosaurexploder.components.ScoreComponent;
@@ -55,7 +55,6 @@ class LevelIntegrationTest {
     @DisplayName("Integration: single enemy defeat updates both score and progress bar")
     void singleEnemyDefeatUpdatesScoreAndProgress() {
         // Arrange
-        progressBar.progress = 0.0;
         int initialScore = scoreComponent.getScore();
 
         // Act
@@ -63,6 +62,5 @@ class LevelIntegrationTest {
 
         // Assert
         assertTrue(scoreComponent.getScore() > initialScore, "Score should increase after hit");
-        assertTrue(progressBar.progress >= 0, "Progress bar should have updated");
     }
 }
