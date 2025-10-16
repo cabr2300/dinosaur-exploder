@@ -14,6 +14,9 @@ import java.lang.reflect.Field;
 import com.dinosaur.dinosaurexploder.interfaces.Dinosaur;
 import com.dinosaur.dinosaurexploder.components.OrangeDinoComponent;
 import com.dinosaur.dinosaurexploder.utils.GameTimer;
+import com.dinosaur.dinosaurexploder.utils.LevelManager;
+
+import javafx.geometry.Point2D;
 
 public class OrangeDinoComponentTest {
 
@@ -90,39 +93,6 @@ public class OrangeDinoComponentTest {
 
     }
 
-    // @Test
-    // void dinoMovedUp()
-    // throws IllegalArgumentException, IllegalAccessException,
-    // NoSuchFieldException, SecurityException {
-    // // need to mock to be able to initialise orangeDino
-    // GameTimer mockTimer = mock(GameTimer.class);
-    // PlayerComponent mockPlayer = new PlayerComponent();
-    // OrangeDinoComponent dino = new OrangeDinoComponent(mockTimer, mockPlayer);
-
-    // Entity mockEntity = mock(Entity.class);
-    // when(mockEntity.getY()).thenReturn(50.0);
-
-    // Field entityField = Component.class.getDeclaredField("entity");
-    // entityField.setAccessible(true);
-    // entityField.set(dino, mockEntity);
-
-    // dino.moveUp();
-
-    // verify(mockEntity).translateY(-1.5);
-
-    // }
-
-    // @Test
-    // void dinoIsPausedTrueAfterSet() {
-    // // need to mock to be able to initialise orangeDino
-    // GameTimer mockTimer = mock(GameTimer.class);
-    // PlayerComponent mockPlayer = new PlayerComponent();
-    // OrangeDinoComponent dino = new OrangeDinoComponent(mockTimer, mockPlayer);
-
-    // dino.setPaused(true);
-
-    // assertEquals(null, dino.onUpdate(3));
-
-    // }
+    // resterande tester måste göras som integrationstester
 
 }
