@@ -35,13 +35,19 @@ class BombComponentTest {
         }
     }
 
+    TestableBombComponent comp;
+
+    @BeforeEach
+    void setup() {
+        comp = new TestableBombComponent();
+    }
+
     // ---------- useBomb (EP/BVA) ----------
 
     @Test
     @DisplayName("useBomb: from 3 → decrements to 2 and spawns once")
     void useBomb_decrements_and_spawns_from3() {
         // Arrange
-        var comp = new TestableBombComponent();
         assertEquals(3, comp.getBombCount());
 
         // Act
@@ -56,7 +62,6 @@ class BombComponentTest {
     @DisplayName("useBomb: boundary 1 → 0, spawns once")
     void useBomb_boundary_1_to_0() {
         // Arrange
-        var comp = new TestableBombComponent();
         comp.drainTo(1); // now bombCount = 1
 
         // Act
@@ -72,7 +77,6 @@ class BombComponentTest {
     @DisplayName("useBomb: at 0 → no decrement and no spawn")
     void useBomb_at_zero_no_effect() {
         // Arrange
-        var comp = new TestableBombComponent();
         comp.drainTo(0);
         int beforeCount = comp.getBombCount();
         int beforeSpawns = comp.spawnCalls;
@@ -91,7 +95,6 @@ class BombComponentTest {
     @DisplayName("checkLevel: same level (1→1) → no regeneration")
     void level_same_no_regen() {
         // Arrange
-        var comp = new TestableBombComponent();
         comp.drainTo(2); // detect regen if it happens
 
         // Act
@@ -105,7 +108,6 @@ class BombComponentTest {
     @DisplayName("checkLevel: 1→2 (boundary) → +1 regen, clamped to max")
     void level_up_by_one_regen_and_clamp() {
         // Arrange
-        var comp = new TestableBombComponent();
         comp.drainTo(2); // currently 2
 
         // Act
@@ -125,7 +127,6 @@ class BombComponentTest {
     @DisplayName("checkLevel: 1→5 (jump) → one regen for that call, lastLevel updated")
     void level_jump_regen_once_and_update_lastLevel() {
         // Arrange
-        var comp = new TestableBombComponent();
         comp.drainTo(2);
 
         // Act
@@ -147,7 +148,6 @@ class BombComponentTest {
     @DisplayName("coins: 14 (just below threshold) → no regen, counter=14")
     void coins_14_no_regen_counter14() {
         // Arrange
-        var comp = new TestableBombComponent();
         comp.drainTo(2); // 2 bombs left
 
         // Act
@@ -162,7 +162,6 @@ class BombComponentTest {
     @DisplayName("coins: 15 (threshold) → regen once, counter resets to 0")
     void coins_15_regen_once_and_reset() {
         // Arrange
-        var comp = new TestableBombComponent();
         comp.drainTo(2);
 
         // Act
@@ -177,7 +176,6 @@ class BombComponentTest {
     @DisplayName("coins: 30 (2×threshold) → up to two regens across sequence, clamped to max")
     void coins_30_two_regens_clamped() {
         // Arrange
-        var comp = new TestableBombComponent();
         comp.drainTo(1); // start at 1 so we can observe two increments
 
         // Act
@@ -191,8 +189,8 @@ class BombComponentTest {
     @Test
     @DisplayName("coins: 15 at already max → stays at max, counter resets")
     void coins_15_at_max_stays_max() {
-        // Arrange
-        var comp = new TestableBombComponent(); // already at 3
+
+        // already at 3
 
         // Act
         for (int i = 0; i < 15; i++) comp.trackCoinForBombRegeneration();
@@ -208,7 +206,6 @@ class BombComponentTest {
     @DisplayName("Clamp: from max-1 then regen → hits exactly max; further regen attempts stay at max")
     void clamp_from_maxMinusOne_hits_max_and_stays() {
         // Arrange
-        var comp = new TestableBombComponent();
         comp.drainTo(2);
 
         // Act: regen via coins to reach max
@@ -235,28 +232,28 @@ class BombComponentTest {
     @Test
     @DisplayName("Coin addition with bomb regeneration, testable subclass")
     void testCoinAddition() {
-        TestableBombComponent bombComponent = new TestableBombComponent();
-        bombComponent.drainTo(2);
+
+        comp.drainTo(2);
 
         for(int i = 0; i < 14; i++) {
-            assertDoesNotThrow(bombComponent::trackCoinForBombRegeneration, "Check coin addition");
+            assertDoesNotThrow(comp::trackCoinForBombRegeneration, "Check coin addition");
         }
-        assertEquals(2, bombComponent.getBombCount(), "Check no bomb generation at 14 coins)");
+        assertEquals(2, comp.getBombCount(), "Check no bomb generation at 14 coins)");
 
-        assertDoesNotThrow(bombComponent::trackCoinForBombRegeneration, "Check coin addition past 14");
-        assertEquals(3, bombComponent.getBombCount(), "Check bomb generation at 15 coins)");
+        assertDoesNotThrow(comp::trackCoinForBombRegeneration, "Check coin addition past 14");
+        assertEquals(3, comp.getBombCount(), "Check bomb generation at 15 coins)");
     }
 
     @Test
     @DisplayName("Level up with bomb regeneration, testable subclass")
     void testCheckLevel() {
-        TestableBombComponent bombComponent = new TestableBombComponent();
-        bombComponent.drainTo(2);
 
-        assertDoesNotThrow(() -> bombComponent.checkLevelForBombRegeneration(1), "Calling method without changing level");
-        assertEquals(2, bombComponent.getBombCount(), "Before bomb regeneration");
+        comp.drainTo(2);
 
-        assertDoesNotThrow(() -> bombComponent.checkLevelForBombRegeneration(2), "Calling method for level change");
-        assertEquals(3, bombComponent.getBombCount(), "After bomb regeneration");
+        assertDoesNotThrow(() -> comp.checkLevelForBombRegeneration(1), "Calling method without changing level");
+        assertEquals(2, comp.getBombCount(), "Before bomb regeneration");
+
+        assertDoesNotThrow(() -> comp.checkLevelForBombRegeneration(2), "Calling method for level change");
+        assertEquals(3, comp.getBombCount(), "After bomb regeneration");
     }
 }
