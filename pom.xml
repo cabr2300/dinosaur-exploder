@@ -90,6 +90,9 @@
       <configuration>
         <!-- You have module-info.java; this avoids module-path issues -->
         <useModulePath>false</useModulePath>
+        <argLine>
+          -javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/1.17.7/byte-buddy-agent-1.17.7.jar
+        </argLine>
       </configuration>
     </plugin>
 

@@ -1,6 +1,7 @@
 package com.dinosaur.dinosaurexploder.components;
 
 import com.almasb.fxgl.entity.Entity;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -221,5 +222,41 @@ class BombComponentTest {
 
         // Assert 2: remains 3
         assertEquals(3, comp.getBombCount());
+    }
+
+    @Test
+    @DisplayName("Intital values tested on production class")
+    void testInitialValues() {
+        BombComponent bombComponent = new BombComponent();
+        assertEquals(3, bombComponent.getBombCount(), "check bomb count");
+        assertEquals(0, bombComponent.getCoinCounter(), "Check initial coins");
+    }
+
+    @Test
+    @DisplayName("Coin addition with bomb regeneration, testable subclass")
+    void testCoinAddition() {
+        TestableBombComponent bombComponent = new TestableBombComponent();
+        bombComponent.drainTo(2);
+
+        for(int i = 0; i < 14; i++) {
+            assertDoesNotThrow(bombComponent::trackCoinForBombRegeneration, "Check coin addition");
+        }
+        assertEquals(2, bombComponent.getBombCount(), "Check no bomb generation at 14 coins)");
+
+        assertDoesNotThrow(bombComponent::trackCoinForBombRegeneration, "Check coin addition past 14");
+        assertEquals(3, bombComponent.getBombCount(), "Check bomb generation at 15 coins)");
+    }
+
+    @Test
+    @DisplayName("Level up with bomb regeneration, testable subclass")
+    void testCheckLevel() {
+        TestableBombComponent bombComponent = new TestableBombComponent();
+        bombComponent.drainTo(2);
+
+        assertDoesNotThrow(() -> bombComponent.checkLevelForBombRegeneration(1), "Calling method without changing level");
+        assertEquals(2, bombComponent.getBombCount(), "Before bomb regeneration");
+
+        assertDoesNotThrow(() -> bombComponent.checkLevelForBombRegeneration(2), "Calling method for level change");
+        assertEquals(3, bombComponent.getBombCount(), "After bomb regeneration");
     }
 }
