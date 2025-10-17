@@ -151,7 +151,8 @@ class BombComponentTest {
         comp.drainTo(2); // 2 bombs left
 
         // Act
-        for (int i = 0; i < 14; i++) comp.trackCoinForBombRegeneration();
+        for (int i = 0; i < 14; i++)
+            comp.trackCoinForBombRegeneration();
 
         // Assert
         assertEquals(2, comp.getBombCount());
@@ -165,7 +166,8 @@ class BombComponentTest {
         comp.drainTo(2);
 
         // Act
-        for (int i = 0; i < 15; i++) comp.trackCoinForBombRegeneration();
+        for (int i = 0; i < 15; i++)
+            comp.trackCoinForBombRegeneration();
 
         // Assert
         assertEquals(3, comp.getBombCount()); // +1 and clamp to max
@@ -179,7 +181,8 @@ class BombComponentTest {
         comp.drainTo(1); // start at 1 so we can observe two increments
 
         // Act
-        for (int i = 0; i < 30; i++) comp.trackCoinForBombRegeneration();
+        for (int i = 0; i < 30; i++)
+            comp.trackCoinForBombRegeneration();
 
         // Assert
         assertEquals(3, comp.getBombCount()); // 1->2 at 15, 2->3 at 30
@@ -193,7 +196,8 @@ class BombComponentTest {
         // already at 3
 
         // Act
-        for (int i = 0; i < 15; i++) comp.trackCoinForBombRegeneration();
+        for (int i = 0; i < 15; i++)
+            comp.trackCoinForBombRegeneration();
 
         // Assert
         assertEquals(3, comp.getBombCount());
@@ -209,7 +213,8 @@ class BombComponentTest {
         comp.drainTo(2);
 
         // Act: regen via coins to reach max
-        for (int i = 0; i < 15; i++) comp.trackCoinForBombRegeneration();
+        for (int i = 0; i < 15; i++)
+            comp.trackCoinForBombRegeneration();
 
         // Assert: at max
         assertEquals(3, comp.getBombCount());
@@ -235,7 +240,7 @@ class BombComponentTest {
 
         comp.drainTo(2);
 
-        for(int i = 0; i < 14; i++) {
+        for (int i = 0; i < 14; i++) {
             assertDoesNotThrow(comp::trackCoinForBombRegeneration, "Check coin addition");
         }
         assertEquals(2, comp.getBombCount(), "Check no bomb generation at 14 coins)");
@@ -256,4 +261,6 @@ class BombComponentTest {
         assertDoesNotThrow(() -> comp.checkLevelForBombRegeneration(2), "Calling method for level change");
         assertEquals(3, comp.getBombCount(), "After bomb regeneration");
     }
+    
+
 }

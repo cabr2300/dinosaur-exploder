@@ -44,7 +44,7 @@ public class BombComponent extends Component implements Bomb {
     ImageView bomb2;
     ImageView bomb3;
     // Declaring Bomb Text
-    private Text bombText;
+    Text bombText;
 
 
     private Node bombUI;
