@@ -6,28 +6,34 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
- * Pure unit tests for BombComponent using JUnit 5.
- * We avoid JavaFX/FXGL side-effects by overriding UI/spawn methods.
+ * Pure logic tests for BombComponent (no JavaFX or FXGL).
+ * Uses Arrange / Act / Assert style for clarity and consistency.
  */
 class BombComponentTest {
 
-    /** Test double that neutralizes UI and records spawn calls. */
+    /** Test double disables UI and real FXGL spawn logic. */
     static class TestableBombComponent extends BombComponent {
         int spawnCalls = 0;
 
         @Override
-        protected void updateBombUI() {
-            /* no-op in unit tests */
-        }
+        protected void updateBombUI() { /* no-op to avoid JavaFX */ }
 
         @Override
         protected void spawnBombBullets(Entity player) {
             spawnCalls++;
         }
 
-        /** Helper to set the bomb count by consuming bombs to reach a target. */
+        /** Helper: consume bombs until reaching a specific count. */
         void drainTo(int targetCount) {
             while (getBombCount() > targetCount) {
                 useBomb(new Entity());
@@ -59,7 +65,7 @@ class BombComponentTest {
     }
 
     @Test
-    @DisplayName("useBomb: boundary 1 → 0, spawns once")
+    @DisplayName("useBomb: boundary 1 → 0, spawns once more")
     void useBomb_boundary_1_to_0() {
         // Arrange
         comp.drainTo(1); // now bombCount = 1
@@ -69,7 +75,6 @@ class BombComponentTest {
 
         // Assert
         assertEquals(0, comp.getBombCount());
-        // used 2 to drain (3->2, 2->1) + this one = 3
         assertEquals(3, comp.spawnCalls);
     }
 
@@ -82,50 +87,50 @@ class BombComponentTest {
         int beforeSpawns = comp.spawnCalls;
 
         // Act
-        comp.useBomb(new Entity()); // extra call at zero
+        comp.useBomb(new Entity());
 
         // Assert
         assertEquals(beforeCount, comp.getBombCount());
-        assertEquals(beforeSpawns, comp.spawnCalls); // unchanged from draining
+        assertEquals(beforeSpawns, comp.spawnCalls);
     }
 
-    // ---------- checkLevelForBombRegeneration (EP/BVA) ----------
+    // ---------- Level regeneration (EP/BVA) ----------
 
     @Test
-    @DisplayName("checkLevel: same level (1→1) → no regeneration")
-    void level_same_no_regen() {
+    @DisplayName("checkLevel: same level → no regeneration")
+    void checkLevel_sameLevel_noRegen() {
         // Arrange
-        comp.drainTo(2); // detect regen if it happens
+        comp.drainTo(2);
 
         // Act
-        comp.checkLevelForBombRegeneration(1); // lastLevel starts at 1
+        comp.checkLevelForBombRegeneration(1);
 
         // Assert
         assertEquals(2, comp.getBombCount());
     }
 
     @Test
-    @DisplayName("checkLevel: 1→2 (boundary) → +1 regen, clamped to max")
-    void level_up_by_one_regen_and_clamp() {
+    @DisplayName("checkLevel: 1→2 → regenerates 1 bomb and clamps to max")
+    void checkLevel_levelUp_regenAndClamp() {
         // Arrange
-        comp.drainTo(2); // currently 2
+        comp.drainTo(2);
 
         // Act
         comp.checkLevelForBombRegeneration(2);
 
         // Assert
-        assertEquals(3, comp.getBombCount()); // back to max
+        assertEquals(3, comp.getBombCount());
 
-        // Act 2: extra level up while already max
+        // Act 2: attempt another level up
         comp.checkLevelForBombRegeneration(3);
 
-        // Assert 2: still 3
+        // Assert 2: still max
         assertEquals(3, comp.getBombCount());
     }
 
     @Test
-    @DisplayName("checkLevel: 1→5 (jump) → one regen for that call, lastLevel updated")
-    void level_jump_regen_once_and_update_lastLevel() {
+    @DisplayName("checkLevel: jump multiple levels → only one regeneration occurs")
+    void checkLevel_jumpMultipleLevels_regenOnce() {
         // Arrange
         comp.drainTo(2);
 
@@ -135,23 +140,24 @@ class BombComponentTest {
         // Assert
         assertEquals(3, comp.getBombCount());
 
-        // Act 2: call again with a higher level
+        // Act 2
         comp.checkLevelForBombRegeneration(6);
 
-        // Assert 2: already at max → stays clamped
+        // Assert 2
         assertEquals(3, comp.getBombCount());
     }
 
-    // ---------- trackCoinForBombRegeneration (EP/BVA) ----------
+    // ---------- Coin regeneration (EP/BVA) ----------
 
     @Test
-    @DisplayName("coins: 14 (just below threshold) → no regen, counter=14")
-    void coins_14_no_regen_counter14() {
+    @DisplayName("trackCoin: 14 coins → no regeneration, counter = 14")
+    void trackCoin_14_noRegen() {
         // Arrange
-        comp.drainTo(2); // 2 bombs left
+        comp.drainTo(2);
 
         // Act
-        for (int i = 0; i < 14; i++) comp.trackCoinForBombRegeneration();
+        for (int i = 0; i < 14; i++)
+            comp.trackCoinForBombRegeneration();
 
         // Assert
         assertEquals(2, comp.getBombCount());
@@ -159,101 +165,237 @@ class BombComponentTest {
     }
 
     @Test
-    @DisplayName("coins: 15 (threshold) → regen once, counter resets to 0")
-    void coins_15_regen_once_and_reset() {
+    @DisplayName("trackCoin: 15 coins → regenerates once and resets counter")
+    void trackCoin_15_regenOnce() {
         // Arrange
         comp.drainTo(2);
 
         // Act
-        for (int i = 0; i < 15; i++) comp.trackCoinForBombRegeneration();
-
-        // Assert
-        assertEquals(3, comp.getBombCount()); // +1 and clamp to max
-        assertEquals(0, comp.getCoinCounter());
-    }
-
-    @Test
-    @DisplayName("coins: 30 (2×threshold) → up to two regens across sequence, clamped to max")
-    void coins_30_two_regens_clamped() {
-        // Arrange
-        comp.drainTo(1); // start at 1 so we can observe two increments
-
-        // Act
-        for (int i = 0; i < 30; i++) comp.trackCoinForBombRegeneration();
-
-        // Assert
-        assertEquals(3, comp.getBombCount()); // 1->2 at 15, 2->3 at 30
-        assertEquals(0, comp.getCoinCounter());
-    }
-
-    @Test
-    @DisplayName("coins: 15 at already max → stays at max, counter resets")
-    void coins_15_at_max_stays_max() {
-
-        // already at 3
-
-        // Act
-        for (int i = 0; i < 15; i++) comp.trackCoinForBombRegeneration();
+        for (int i = 0; i < 15; i++)
+            comp.trackCoinForBombRegeneration();
 
         // Assert
         assertEquals(3, comp.getBombCount());
         assertEquals(0, comp.getCoinCounter());
     }
 
-    // ---------- Clamp behavior via public paths ----------
+    @Test
+    @DisplayName("trackCoin: 30 coins → two regens, clamped to max")
+    void trackCoin_30_twoRegensClamped() {
+        // Arrange
+        comp.drainTo(1);
+
+        // Act
+        for (int i = 0; i < 30; i++)
+            comp.trackCoinForBombRegeneration();
+
+        // Assert
+        assertEquals(3, comp.getBombCount());
+        assertEquals(0, comp.getCoinCounter());
+    }
 
     @Test
-    @DisplayName("Clamp: from max-1 then regen → hits exactly max; further regen attempts stay at max")
-    void clamp_from_maxMinusOne_hits_max_and_stays() {
+    @DisplayName("trackCoin: 15 coins while already max → stays at max")
+    void trackCoin_15_atMax_staysMax() {
+        // Arrange
+        assertEquals(3, comp.getBombCount());
+
+        // Act
+        for (int i = 0; i < 15; i++)
+            comp.trackCoinForBombRegeneration();
+
+        // Assert
+        assertEquals(3, comp.getBombCount());
+        assertEquals(0, comp.getCoinCounter());
+    }
+
+    // ---------- Clamp & boundary combination ----------
+
+    @Test
+    @DisplayName("Clamp: from 2 → regen to 3, then stay at 3 even with more regen")
+    void clamp_from2_to3_thenStay() {
         // Arrange
         comp.drainTo(2);
 
-        // Act: regen via coins to reach max
-        for (int i = 0; i < 15; i++) comp.trackCoinForBombRegeneration();
+        // Act
+        for (int i = 0; i < 15; i++)
+            comp.trackCoinForBombRegeneration();
 
-        // Assert: at max
+        // Assert
         assertEquals(3, comp.getBombCount());
 
-        // Act 2: try to regen again (level up)
+        // Act 2
         comp.checkLevelForBombRegeneration(2);
 
-        // Assert 2: remains 3
+        // Assert 2
         assertEquals(3, comp.getBombCount());
     }
 
+    // ---------- Initial state ----------
+
     @Test
-    @DisplayName("Intital values tested on production class")
-    void testInitialValues() {
-        BombComponent bombComponent = new BombComponent();
-        assertEquals(3, bombComponent.getBombCount(), "check bomb count");
-        assertEquals(0, bombComponent.getCoinCounter(), "Check initial coins");
+    @DisplayName("Initial values in production class are correct")
+    void initialValues_correct() {
+        // Arrange + Act
+        BombComponent prod = new BombComponent();
+
+        // Assert
+        assertEquals(3, prod.getBombCount());
+        assertEquals(0, prod.getCoinCounter());
+    }
+
+    // ---------- Mixed scenario ----------
+
+    @Test
+    @DisplayName("Stress: multiple level ups and coin gains combined")
+    void stress_multipleMixedRegeneration() {
+        // Arrange
+        comp.drainTo(1);
+
+        // Act
+        comp.checkLevelForBombRegeneration(2);
+        for (int i = 0; i < 15; i++)
+            comp.trackCoinForBombRegeneration();
+        comp.checkLevelForBombRegeneration(3);
+
+        // Assert
+        assertEquals(3, comp.getBombCount());
+    }
+
+    // ---------- Mockito-based verification ----------
+
+    @Test
+    @DisplayName("useBomb: calls spawnBombBullets() once when bombCount > 0")
+    void useBomb_calls_spawn_when_count_positive() {
+        // Arrange
+        var spyComponent = spy(new BombComponent());
+        doNothing().when(spyComponent).updateBombUI();
+        doNothing().when(spyComponent).spawnBombBullets(any());
+
+        // Drain to 1 bomb to simulate ready-to-use state
+        while (spyComponent.getBombCount() > 1)
+            spyComponent.useBomb(new Entity());
+
+        clearInvocations(spyComponent);
+
+        // Act
+        spyComponent.useBomb(new Entity());
+
+        // Assert
+        verify(spyComponent, times(1)).spawnBombBullets(any());
+        verify(spyComponent, times(1)).updateBombUI();
+        assertTrue(spyComponent.getBombCount() >= 0);
+    }
+
+        // ---------- Defensive behavior & UI verification (Mockito) ----------
+
+    @Test
+    @DisplayName("useBomb: never goes negative and never spawns after reaching zero")
+    void useBomb_never_goes_negative_and_never_spawns_after_zero() {
+        // Arrange
+        var spyComponent = spy(new BombComponent());
+        doNothing().when(spyComponent).updateBombUI();
+        doNothing().when(spyComponent).spawnBombBullets(any());
+
+        // Drain all bombs to zero (these will still spawn while > 0)
+        while (spyComponent.getBombCount() > 0)
+            spyComponent.useBomb(new Entity());
+
+        clearInvocations(spyComponent); // reset invocation history
+
+        // Act
+        for (int i = 0; i < 10; i++)
+            spyComponent.useBomb(new Entity()); // repeatedly press bomb key when already empty
+
+        // Assert
+        verify(spyComponent, never()).spawnBombBullets(any());
+        assertEquals(0, spyComponent.getBombCount(), "Bomb count must never go below 0");
     }
 
     @Test
-    @DisplayName("Coin addition with bomb regeneration, testable subclass")
-    void testCoinAddition() {
+    @DisplayName("updateBombUI: triggered on both useBomb() and regeneration")
+    void ui_updates_on_useBomb_and_on_regen() {
+        // Arrange
+        var spyComponent = spy(new BombComponent());
+        doNothing().when(spyComponent).updateBombUI();
+        doNothing().when(spyComponent).spawnBombBullets(any());
 
-        comp.drainTo(2);
+        // Act 1: useBomb (3 → 2)
+        spyComponent.useBomb(new Entity());
 
-        for(int i = 0; i < 14; i++) {
-            assertDoesNotThrow(comp::trackCoinForBombRegeneration, "Check coin addition");
-        }
-        assertEquals(2, comp.getBombCount(), "Check no bomb generation at 14 coins)");
+        // Assert 1: UI updated
+        verify(spyComponent, atLeastOnce()).updateBombUI();
 
-        assertDoesNotThrow(comp::trackCoinForBombRegeneration, "Check coin addition past 14");
-        assertEquals(3, comp.getBombCount(), "Check bomb generation at 15 coins)");
+        // Act 2: regeneration via level-up
+        clearInvocations(spyComponent);
+        spyComponent.checkLevelForBombRegeneration(2); // 2 → 3
+
+        // Assert 2: UI updated again
+        verify(spyComponent, atLeastOnce()).updateBombUI();
     }
 
     @Test
-    @DisplayName("Level up with bomb regeneration, testable subclass")
-    void testCheckLevel() {
+    @DisplayName("updateBombUI: not called when state remains unchanged")
+    void ui_does_not_update_when_nothing_changes() {
+        // Arrange
+        var spyComponent = spy(new BombComponent());
+        doNothing().when(spyComponent).updateBombUI();
+        doNothing().when(spyComponent).spawnBombBullets(any());
 
-        comp.drainTo(2);
+        // --- Case 1: useBomb at zero (no bombs left) ---
+        while (spyComponent.getBombCount() > 0)
+            spyComponent.useBomb(new Entity());
+        clearInvocations(spyComponent);
 
-        assertDoesNotThrow(() -> comp.checkLevelForBombRegeneration(1), "Calling method without changing level");
-        assertEquals(2, comp.getBombCount(), "Before bomb regeneration");
+        // Act 1
+        spyComponent.useBomb(new Entity());
 
-        assertDoesNotThrow(() -> comp.checkLevelForBombRegeneration(2), "Calling method for level change");
-        assertEquals(3, comp.getBombCount(), "After bomb regeneration");
+        // Assert 1
+        verify(spyComponent, never()).updateBombUI();
+
+        // --- Case 2: coins below threshold (14 < 15) ---
+        clearInvocations(spyComponent);
+        for (int i = 0; i < 14; i++)
+            spyComponent.trackCoinForBombRegeneration();
+
+        // Assert 2
+        verify(spyComponent, never()).updateBombUI();
+
+        // --- Case 3: same level (no advancement) ---
+        clearInvocations(spyComponent);
+        spyComponent.checkLevelForBombRegeneration(1);
+
+        // Assert 3
+        verify(spyComponent, never()).updateBombUI();
     }
+
+    // @Test
+    // @DisplayName("checkLevelForBombRegeneration: regenerates only on exact +1 level increase")
+    // void level_advances_only_on_increment_by_one() {
+    //     // Arrange
+    //     var spyComponent = spy(new BombComponent());
+    //     doNothing().when(spyComponent).updateBombUI();
+    //     doNothing().when(spyComponent).spawnBombBullets(any());
+
+    //     // Drain from 3 → 2 so we can observe later regeneration
+    //     while (spyComponent.getBombCount() > 2)
+    //         spyComponent.useBomb(new Entity());
+
+    //     clearInvocations(spyComponent);
+
+    //     // Act 1: jump multiple levels (1 → 5)
+    //     spyComponent.checkLevelForBombRegeneration(5);
+
+    //     // Assert 1: no regeneration occurs
+    //     assertEquals(2, spyComponent.getBombCount(), "Jumping several levels should not regenerate");
+
+    //     // Act 2: exact +1 level increment (5 → 6)
+    //     clearInvocations(spyComponent);
+    //     spyComponent.checkLevelForBombRegeneration(6);
+
+    //     // Assert 2: one regeneration occurs and UI refreshed
+    //     assertEquals(3, spyComponent.getBombCount(), "Increment by one level should regenerate");
+    //     verify(spyComponent, atLeastOnce()).updateBombUI();
+    // }
+
 }
