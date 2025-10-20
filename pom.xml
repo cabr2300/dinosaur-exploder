@@ -3,10 +3,12 @@
         xmlns="http://maven.apache.org/POM/4.0.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dinosaur</groupId>
     <artifactId>dinosaur-exploder</artifactId>
     <version>1.0</version>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <source.version>21</source.version>
@@ -16,17 +18,25 @@
         <jpro.version>2025.1.0</jpro.version>
         <fxgl.version>21.1</fxgl.version>
         <junit.version>5.13.4</junit.version>
-        <mainClassName>com.dinosaur.dinosaurexploder.DinosaurApp</mainClassName>
-        <mainClassJProName>com.dinosaur.dinosaurexploder.DinosaurWebApp</mainClassJProName>
         <jacoco.version>0.8.12</jacoco.version>
         <pitest.version>1.15.8</pitest.version>
+        <mainClassName>com.dinosaur.dinosaurexploder.DinosaurApp</mainClassName>
+        <mainClassJProName>com.dinosaur.dinosaurexploder.DinosaurWebApp</mainClassJProName>
+        <maven.site.version>3.12.1</maven.site.version>
+        <maven.project.info.reports.plugin.version>3.4.5</maven.project.info.reports.plugin.version>
     </properties>
+
+    <!-- ===================== DEPENDENCIES ===================== -->
     <dependencies>
+
+        <!-- FXGL Game Engine -->
         <dependency>
             <groupId>com.github.almasb</groupId>
             <artifactId>fxgl</artifactId>
             <version>${fxgl.version}</version>
         </dependency>
+
+        <!-- JUnit 5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -39,6 +49,8 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Mockito -->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
@@ -51,6 +63,8 @@
             <version>5.2.0</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- JPro + Jetty -->
         <dependency>
             <groupId>one.jpro</groupId>
             <artifactId>jpro-webapi</artifactId>
@@ -63,127 +77,164 @@
             <version>11.0.15</version>
         </dependency>
     </dependencies>
+
+    <!-- ===================== REPOSITORIES ===================== -->
     <repositories>
         <repository>
             <id>oss.sonatype.org-snapshot</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </repository>
         <repository>
-            <id>jpro - sandec repository</id>
+            <id>jpro-sandec-repo</id>
             <url>https://sandec.jfrog.io/artifactory/repo</url>
         </repository>
     </repositories>
+
     <pluginRepositories>
         <pluginRepository>
-            <id>jpro - sandec repository</id>
+            <id>jpro-sandec-repo</id>
             <url>https://sandec.jfrog.io/artifactory/repo</url>
         </pluginRepository>
     </pluginRepositories>
+
+    <!-- ===================== BUILD / PLUGINS ===================== -->
     <build>
-  <plugins>
+        <plugins>
 
-    <!-- ✅ JUnit runner (critical for test discovery) -->
-    <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-surefire-plugin</artifactId>
-      <version>3.2.5</version>
-      <configuration>
-        <!-- You have module-info.java; this avoids module-path issues -->
-        <useModulePath>false</useModulePath>
-        <argLine>
-          -javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/1.17.7/byte-buddy-agent-1.17.7.jar
-        </argLine>
-      </configuration>
-    </plugin>
+            <!-- ✅ Safe JUnit runner -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <useModulePath>false</useModulePath>
+                    <argLine>
+  -javaagent:${settings.localRepository}/org/jacoco/org.jacoco.agent/${jacoco.version}/org.jacoco.agent-${jacoco.version}-runtime.jar=destfile=${project.build.directory}/jacoco.exec
+</argLine>
+                </configuration>
+            </plugin>
 
-    <!-- Compiler -->
-    <plugin>
-      <artifactId>maven-compiler-plugin</artifactId>
-      <version>${maven.compiler.version}</version>
-      <configuration>
-        <release>${source.version}</release>
-      </configuration>
-    </plugin>
+            <!-- Compiler -->
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.version}</version>
+                <configuration>
+                    <release>${source.version}</release>
+                </configuration>
+            </plugin>
 
-    <!-- JavaFX run plugin (unchanged) -->
-    <plugin>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-maven-plugin</artifactId>
-      <version>${jfx.maven.plugin.version}</version>
-      <configuration>
-        <stripDebug>true</stripDebug>
-        <compress>2</compress>
-        <noHeaderFiles>true</noHeaderFiles>
-        <noManPages>true</noManPages>
-        <launcher>Start-game</launcher>
-        <jlinkImageName>game</jlinkImageName>
-        <jlinkZipName>fxgl-game</jlinkZipName>
-        <mainClass>${mainClassName}</mainClass>
-      </configuration>
-    </plugin>
+            <!-- JavaFX -->
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>${jfx.maven.plugin.version}</version>
+                <configuration>
+                    <mainClass>${mainClassName}</mainClass>
+                    <launcher>Start-game</launcher>
+                    <stripDebug>true</stripDebug>
+                    <compress>2</compress>
+                    <noHeaderFiles>true</noHeaderFiles>
+                    <noManPages>true</noManPages>
+                    <jlinkImageName>game</jlinkImageName>
+                    <jlinkZipName>fxgl-game</jlinkZipName>
+                </configuration>
+            </plugin>
 
-    <!-- Fat JAR (unchanged) -->
-    <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-shade-plugin</artifactId>
-      <version>${maven.shade.version}</version>
-      <executions>
-        <execution>
-          <phase>package</phase>
-          <goals>
-            <goal>shade</goal>
-          </goals>
-          <configuration>
-            <createDependencyReducedPom>false</createDependencyReducedPom>
-            <transformers>
-              <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                <mainClass>${mainClassName}</mainClass>
-              </transformer>
-            </transformers>
-          </configuration>
-        </execution>
-      </executions>
-    </plugin>
+            <!-- Fat JAR -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>${maven.shade.version}</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals><goal>shade</goal></goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>${mainClassName}</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
-    <!-- JPro (unchanged) -->
-    <plugin>
-      <groupId>one.jpro</groupId>
-      <artifactId>jpro-maven-plugin</artifactId>
-      <version>${jpro.version}</version>
-      <configuration>
-        <mainClassName>${mainClassJProName}</mainClassName>
-      </configuration>
-    </plugin>
+            <!-- JPro -->
+            <plugin>
+                <groupId>one.jpro</groupId>
+                <artifactId>jpro-maven-plugin</artifactId>
+                <version>${jpro.version}</version>
+                <configuration>
+                    <mainClassName>${mainClassJProName}</mainClassName>
+                </configuration>
+            </plugin>
+            <!-- ✅ JaCoCo --> 
+            <!-- mvn clean verify site --> 
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+                        <goals><goal>prepare-agent</goal></goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals><goal>report</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
 
-    <!-- JaCoCo (unchanged) -->
-    <plugin>
-  <groupId>org.jacoco</groupId>
-  <artifactId>jacoco-maven-plugin</artifactId>
-  <version>${jacoco.version}</version>
-  <executions>
-    <execution>
-      <goals><goal>prepare-agent</goal></goals>
-      <configuration>
-        <!-- instrument only your production code -->
-        <includes>
-          <include>com/dinosaur/**</include>
-        </includes>
-        <!-- do not instrument libraries/mocking engines -->
-        <excludes>
-          <exclude>org/mockito/**</exclude>
-          <exclude>net/bytebuddy/**</exclude>
-        </excludes>
-      </configuration>
-    </execution>
-    <execution>
-      <id>report</id>
-      <phase>verify</phase>
-      <goals><goal>report</goal></goals>
-    </execution>
-  </executions>
-</plugin>
+            <!-- ✅ PIT Mutation -->
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>${pitest.version}</version>
+                <configuration>
+                    <targetClasses>
+                        <param>com.dinosaur.*</param>
+                    </targetClasses>
+                    <targetTests>
+                        <param>com.dinosaur.*Test</param>
+                    </targetTests>
+                    <mutators>
+                        <mutator>STRONGER</mutator>
+                    </mutators>
+                    <threads>4</threads>
+                    <outputFormats>
+                        <param>HTML</param>
+                        <param>XML</param>
+                    </outputFormats>
+                    <skipFailingTests>true</skipFailingTests>
+                    <failWhenNoMutations>false</failWhenNoMutations>
+                </configuration>
+            </plugin>
 
-  </plugins>
-</build>
+            <!-- ✅ Maven Site -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>${maven.site.version}</version>
+                <configuration>
+                    <reportPlugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-project-info-reports-plugin</artifactId>
+                            <version>${maven.project.info.reports.plugin.version}</version>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.jacoco</groupId>
+                            <artifactId>jacoco-maven-plugin</artifactId>
+                            <version>${jacoco.version}</version>
+                        </plugin>
+                    </reportPlugins>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
 
 </project>
