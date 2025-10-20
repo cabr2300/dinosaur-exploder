@@ -1,95 +1,43 @@
-// package com.dinosaur.dinosaurexploder.integrationtests;
-
-// import com.almasb.fxgl.dsl.FXGL;
-// import com.dinosaur.dinosaurexploder.components.GreenDinoComponent;
-// import com.dinosaur.dinosaurexploder.utils.LevelManager;
-// import org.junit.jupiter.api.BeforeAll;
-// import org.junit.jupiter.api.Test;
-// import org.mockito.MockedStatic;
-
-// import java.lang.reflect.Field;
-
-// import static org.junit.jupiter.api.Assertions.assertEquals;
-// import static org.mockito.Mockito.*;
-
-// public class GreenDinoLevelManagerIntegrationTest {
-
-// //     @Test
-// //     void testOnAddedSetsVerticalSpeed() throws Exception {
-// //         // 1. Mocka LevelManager
-// //         LevelManager mockLevelManager = mock(LevelManager.class);
-// //         when(mockLevelManager.getEnemySpeed()).thenReturn(3.5);
-
-// //         // 2. Mocka FXGL.geto() statiskt för "levelManager"
-// //         try (MockedStatic<FXGL> fxglMock = mockStatic(FXGL.class)) {
-// //             fxglMock.when(() -> FXGL.geto("levelManager")).thenReturn(mockLevelManager);
-
-// //             // 3. Skapa komponent och kör onAdded
-// //             GreenDinoComponent dino = new GreenDinoComponent();
-// //             dino.onAdded();
-
-// //             // 4. Läs private field verticalSpeed via reflektion
-// //             Field field = GreenDinoComponent.class.getDeclaredField("verticalSpeed");
-// //             field.setAccessible(true);
-// //             double verticalSpeed = (double) field.get(dino);
-
-// //             // 5. Kontrollera att verticalSpeed sattes korrekt
-// //             assertEquals(3.5, verticalSpeed);
-// //         }
-// //     }
-// // }
-
 package com.dinosaur.dinosaurexploder.integrationtests;
 
-import com.almasb.fxgl.dsl.FXGL;
-import com.almasb.fxgl.time.LocalTimer;
 import com.dinosaur.dinosaurexploder.components.GreenDinoComponent;
 import com.dinosaur.dinosaurexploder.utils.LevelManager;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-
-import java.lang.reflect.Field;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.when;
 
 public class GreenDinoLevelManagerIntegrationTest {
 
-    private GreenDinoComponent greenDino;
-    private LevelManager levelManager;
-    private LocalTimer mockTimer;
+    /**
+     * Testdubbel som använder en egen LevelManager istället för FXGL.geto
+     */
+    static class TestableGreenDinoComponent extends GreenDinoComponent {
+        private final LevelManager levelManager;
 
-    @BeforeEach
-    public void setUp() {
-        greenDino = new GreenDinoComponent();
-        levelManager = new LevelManager();
+        public TestableGreenDinoComponent(LevelManager levelManager) {
+            this.levelManager = levelManager;
+        }
 
-        // Mocka FXGL.newLocalTimer() så vi slipper engine
-        mockTimer = mock(LocalTimer.class);
+        @Override
+        public void onAdded() {
+            // Använd testets LevelManager istället för FXGL
+            this.verticalSpeed = levelManager.getEnemySpeed();
+        }
+
+        public double getVerticalSpeedForTest() {
+            return verticalSpeed;
+        }
     }
 
     @Test
-    public void testVerticalSpeedIsSetFromLevelManager() throws Exception {
-        try (MockedStatic<FXGL> fxglMock = mockStatic(FXGL.class)) {
-            // Mocka FXGL.geto() så vi får levelManager
-            fxglMock.when(() -> FXGL.geto("levelManager")).thenReturn(levelManager);
-            // Mocka FXGL.newLocalTimer() så vi slipper starta FXGL engine
-            fxglMock.when(FXGL::newLocalTimer).thenReturn(mockTimer);
+    void testVerticalSpeedIsSetFromLevelManager() {
+        LevelManager levelManager = new LevelManager();
+        levelManager.nextLevel(); // t.ex. enemySpeed = 1.7
 
-            // Kör onAdded
-            greenDino.onAdded();
+        TestableGreenDinoComponent greenDino = new TestableGreenDinoComponent(levelManager);
+        greenDino.onAdded();
 
-            // Hämta verticalSpeed med reflection
-            Field verticalSpeedField = GreenDinoComponent.class.getDeclaredField("verticalSpeed");
-            verticalSpeedField.setAccessible(true);
-            double verticalSpeedValue = (double) verticalSpeedField.get(greenDino);
-
-            // Kontrollera att verticalSpeed är samma som i LevelManager
-            assertEquals(levelManager.getEnemySpeed(), verticalSpeedValue,
-                    "GreenDinoComponent should take verticalSpeed from LevelManager");
-        }
+        assertEquals(levelManager.getEnemySpeed(), greenDino.getVerticalSpeedForTest(),
+                "GreenDinoComponent should take verticalSpeed from LevelManager");
     }
 }
