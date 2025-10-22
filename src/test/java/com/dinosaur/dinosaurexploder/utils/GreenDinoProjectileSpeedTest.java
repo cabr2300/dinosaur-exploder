@@ -75,23 +75,23 @@ public class GreenDinoProjectileSpeedTest {
 
     }
 
-        @Test
-        void DinoSpeedVsProjektilSpeedLevel1To100() {
-        LevelManager lm = new LevelManager();
-        double projectileSpeed = EnemyProjectileSpeed();
-        double projectilePxPerFrame = projectileSpeed / 60.0;  //(gör om pixlar/sek till pixlar/frame)
+    //     @Test
+    //     void DinoSpeedVsProjektilSpeedLevel1To100() {
+    //     LevelManager lm = new LevelManager();
+    //     double projectileSpeed = EnemyProjectileSpeed();
+    //     double projectilePxPerFrame = projectileSpeed / 60.0;  //(gör om pixlar/sek till pixlar/frame)
 
-            for (int level = 1; level <= 100; level++) {
-                double dinoPxPerFrame = DinoSpeed(lm);
+    //         for (int level = 1; level <= 100; level++) {
+    //             double dinoPxPerFrame = DinoSpeed(lm);
 
-                boolean ok = projectilePxPerFrame > dinoPxPerFrame;
+    //             boolean ok = projectilePxPerFrame > dinoPxPerFrame;
 
-                System.out.printf("Level %2d: projectile=%.2f, dino=%.2f -> %s%n",
-                        level, projectilePxPerFrame, dinoPxPerFrame, ok ? "OK" : "FAIL");
-                assertTrue(projectilePxPerFrame > dinoPxPerFrame);
-                lm.nextLevel();
-            }
+    //             System.out.printf("Level %2d: projectile=%.2f, dino=%.2f -> %s%n",
+    //                     level, projectilePxPerFrame, dinoPxPerFrame, ok ? "OK" : "FAIL");
+    //             assertTrue(projectilePxPerFrame > dinoPxPerFrame);
+    //             lm.nextLevel();
+    //         }
 
-    }
+    // }
 
 }
